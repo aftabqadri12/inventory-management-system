@@ -10,29 +10,88 @@ def connect_database():
         cursor = connection.cursor()
     except:
         messagebox.showerror("Error", "Connection Error")
-        return
+        return None, None
     cursor.execute('CREATE DATABASE IF NOT EXISTS inventory_system')
     cursor.execute('use inventory_system')
     cursor.execute("""
-                   CREATE TABLE IF NOT EXISTS 
-                       employee_data(
-                       emID INT PRIMARY KEY,
-                       name VARCHAR(100),
-                       email VARCHAR(100),
-                       gender VARCHAR(50),
-                       dob VARCHAR(30),
-                       contact VARCHAR(30),
-                       employment VARCHAR(50),
-                       work_shift VARCHAR(50),
-                       education VARCHAR(50),
-                       address VARCHAR(100),
-                       doj VARCHAR(30),
-                       salary VARCHAR(30),
-                       password VARCHAR(50)
+                   CREATE TABLE IF NOT EXISTS
+                       employee_data
+                   (
+                       emID
+                       INT
+                       PRIMARY
+                       KEY,
+                       name
+                       VARCHAR
+                   (
+                       100
+                   ),
+                       email VARCHAR
+                   (
+                       100
+                   ),
+                       gender VARCHAR
+                   (
+                       50
+                   ),
+                       dob VARCHAR
+                   (
+                       30
+                   ),
+                       contact VARCHAR
+                   (
+                       30
+                   ),
+                       employment VARCHAR
+                   (
+                       50
+                   ),
+                       work_shift VARCHAR
+                   (
+                       50
+                   ),
+                       education VARCHAR
+                   (
+                       50
+                   ),
+                       address VARCHAR
+                   (
+                       100
+                   ),
+                       doj VARCHAR
+                   (
+                       30
+                   ),
+                       salary VARCHAR
+                   (
+                       30
+                   ),
+                       usertype VARCHAR
+                   (
+                       50
+                   ),
+                       password VARCHAR
+                   (
+                       50
+                   )
                        )
                    """)
 
-connect_database()
+    return cursor,connection
+
+
+
+def add_employee(emID, name, email, gender, dob, contact, employement, education, work_shift, address, doj, salary,
+                 usertype, password):
+    if (
+            emID == '' or name == '' or email == '' or gender == 'Select Gender' or contact == '' or employement == 'Select Type' or
+            education == 'Select Education' or work_shift == 'Select Shift' or address == '\n' or salary == '' or
+            usertype == 'Select User Type' or password == ''):
+        messagebox.showerror('Error', 'All fields are required')
+    else:
+       cursor, connection= connect_database()
+        if not cursor or not connection:
+
 
 
 def employee_form(window):
@@ -70,7 +129,8 @@ def employee_form(window):
 
     employee_treeview = ttk.Treeview(top_frame,
                                      columns=("emID", "name", "email", 'gender', 'dob', 'contact', 'employement-type',
-                                              'education', 'work_shift', 'address', 'doj', 'salary', 'usertype'),
+                                              'education', 'work_shift', 'address', 'doj', 'salary', 'usertype',
+                                              'password'),
                                      show="headings", yscrollcommand=vertical_scrollbar.set,
                                      xscrollcommand=horizontal_scrollbar.set)
     horizontal_scrollbar.pack(side=BOTTOM, fill=X)
@@ -93,6 +153,7 @@ def employee_form(window):
     employee_treeview.heading("doj", text="Date Of Joining")
     employee_treeview.heading("salary", text="Salary")
     employee_treeview.heading("usertype", text="Usertype")
+    employee_treeview.heading("password", text="Password")
 
     employee_treeview.column('emID', width=60)
     employee_treeview.column('name', width=140)
@@ -107,6 +168,7 @@ def employee_form(window):
     employee_treeview.column('doj', width=100)
     employee_treeview.column('salary', width=140)
     employee_treeview.column('usertype', width=120)
+    employee_treeview.column('password', width=120)
 
     detail_frame = Frame(employee_frame)
     detail_frame.place(x=20, y=300)
@@ -196,7 +258,7 @@ def employee_form(window):
     usertype_combobox = ttk.Combobox(detail_frame, values=["Admin", "Employee"],
                                      font=('times new roman', 12), width=18,
                                      state='readonly')
-    usertype_combobox.set("Select Shift")
+    usertype_combobox.set("Select Type")
     usertype_combobox.grid(row=4, column=3)
 
     salary_label = Label(detail_frame, text="Salary", font=('times new roman', 12))
@@ -215,7 +277,15 @@ def employee_form(window):
     button_frame.place(x=200, y=530)
 
     add_button = Button(button_frame, text="Add", font=("times new roman", 12), width=10, cursor='hand2', fg="white",
-                        bg="#0f4d7d")
+                        bg="#0f4d7d",
+                        command=lambda: add_employee(empId_entry.get(), name_entry.get(), email_entry.get(),
+                                                     gender_combobox.get(),
+                                                     dob_date_entry.get(), contact_entry.get(),
+                                                     emp_type__combobox.get(),
+                                                     education_combobox.get(), workshift_combobox.get(),
+                                                     address_text.get(1.0, END),
+                                                     doj_date_entry.get(), salary_entry.get(), usertype_combobox.get(),
+                                                     password_entry.get()))
     add_button.grid(row=0, column=0, padx=20)
 
     update_button = Button(button_frame, text="Update", font=("times new roman", 12), width=10, cursor='hand2',
