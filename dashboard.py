@@ -4,7 +4,6 @@ from employees import employee_form
 
 # FUNCTIONALITY PART
 
-
 # GUI PART
 window = Tk()
 

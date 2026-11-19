@@ -11,6 +11,12 @@ def connect_database():
     except:
         messagebox.showerror("Error", "Connection Error")
         return None, None
+
+    return cursor, connection
+
+
+def create_database_table():
+    cursor, connection = connect_database()
     cursor.execute('CREATE DATABASE IF NOT EXISTS inventory_system')
     cursor.execute('use inventory_system')
     cursor.execute("""
@@ -77,7 +83,24 @@ def connect_database():
                        )
                    """)
 
-    return cursor,connection
+
+def treeview_data():
+    cursor, connection = connect_database()
+    if not cursor or not connection:
+        return
+    cursor.execute('USE inventory_system')
+    try:
+        cursor.execute('SELECT * from employee_data')
+        employee_records = cursor.fetchall()
+        employee_treeview.delete(*employee_treeview.get_children())
+        for record in employee_records:
+            employee_treeview.insert("", END, values=record)
+    except Exception as e:
+        messagebox.showerror("Error", f'Error due to {e}')
+    finally:
+        cursor.close()
+        connection.close()
+
 
 
 
@@ -89,13 +112,50 @@ def add_employee(emID, name, email, gender, dob, contact, employement, education
             usertype == 'Select User Type' or password == ''):
         messagebox.showerror('Error', 'All fields are required')
     else:
-       cursor, connection= connect_database()
+        cursor, connection = connect_database()
         if not cursor or not connection:
+            return
+        cursor.execute('USE inventory_system')
+        try:
+            cursor.execute('SELECT emID FROM employee_data WHERE emID =%s', (emID, ))
+            if cursor.fetchone():
+                messagebox.showerror('Error', f'Employee with emID {emID} already exists')
+                return
+            cursor.execute('INSERT INTO employee_data VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)',
+                           (emID, name, email, gender, dob, contact, employement, education, work_shift, address, doj,
+                            salary, usertype, password))
+            connection.commit()
+            treeview_data()
+            messagebox.showinfo('Success', 'Data is inserted successfully')
+        except Exception as e:
+            messagebox.showerror("Error", f'Error due to {e}')
+        finally:
+            cursor.close()
+            connection.close()
 
+
+def clear_fields(empId_entry, name_entry, email_entry, dob_date_entry, gender_combobox, contact_entry,
+                 emp_type__combobox, education_combobox, workshift_combobox,
+                 address_text, doj_date_entry, salary_entry, usertype_combobox, password_entry):
+    empId_entry.delete(0, END)
+    name_entry.delete(0, END)
+    email_entry.delete(0, END)
+    from datetime import date
+    dob_date_entry.set_date(date.today())
+    gender_combobox.set("Select Gender")
+    contact_entry.delete(0, END)
+    emp_type__combobox.set("Select Type")
+    education_combobox.set("Select Education")
+    workshift_combobox.set("Select Shift")
+    address_text.delete(1.0, END)
+    doj_date_entry.set_date(date.today())
+    salary_entry.delete(0, END)
+    usertype_combobox.set("Select User Type")
+    password_entry.delete(0, END)
 
 
 def employee_form(window):
-    global back_image
+    global back_image, employee_treeview
     employee_frame = Frame(window, width=1070, height=567, bg="white")
     employee_frame.place(x=200, y=100)
     heading_label = Label(employee_frame, text="Manage Employee Details", font=("times new roman", 16, "bold"),
@@ -170,6 +230,8 @@ def employee_form(window):
     employee_treeview.column('usertype', width=120)
     employee_treeview.column('password', width=120)
 
+    treeview_data()
+
     detail_frame = Frame(employee_frame)
     detail_frame.place(x=20, y=300)
 
@@ -191,7 +253,7 @@ def employee_form(window):
     gender_label = Label(detail_frame, text="Gender", font=('times new roman', 12))
     gender_label.grid(row=1, column=0, padx=20, pady=10)
 
-    gender_combobox = ttk.Combobox(detail_frame, values=["le", "Female"], font=('times new roman', 12), width=18,
+    gender_combobox = ttk.Combobox(detail_frame, values=["Male", "Female"], font=('times new roman', 12), width=18,
                                    state='readonly')
     gender_combobox.set("Select Gender")
     gender_combobox.grid(row=1, column=1)
@@ -299,6 +361,13 @@ def employee_form(window):
     delete_button.grid(row=0, column=2, padx=20)
 
     clear_button = Button(button_frame, text="Clear", font=("times new roman", 12), width=10, cursor='hand2',
-                          fg="white",
-                          bg="#0f4d7d")
+                          fg="white", bg="#0f4d7d", command=lambda: clear_fields(empId_entry, name_entry, email_entry,
+                                                                                 dob_date_entry, gender_combobox,
+                                                                                 contact_entry,
+                                                                                 emp_type__combobox, education_combobox,
+                                                                                 workshift_combobox,
+                                                                                 address_text, doj_date_entry,
+                                                                                 salary_entry, usertype_combobox,
+                                                                                 password_entry))
     clear_button.grid(row=0, column=3, padx=20)
+    create_database_table()
